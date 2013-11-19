@@ -3,7 +3,11 @@
 \usepackage{fontspec}
 \usepackage{amsmath}
 \usepackage{enumitem}
-\usepackage{fullpage}
+\usepackage{subfig}
+\usepackage[a4paper,margin=1in]{geometry}
+
+\newcommand{\eqname}[1]{\tag*{#1}} % tag an equation with a name
+
 \defaultfontfeatures{Mapping=tex-text}
 \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
 
@@ -197,21 +201,121 @@ case in the non-scalar case.
     estimated by the KF. Contains an estimate of the position and velocity of
     the car at each time step. This is the state vector that is used by the
     KF---we have no access to the true state.
-  \item[$P$]
-  \item[$G$]
-  \item[$D$]
-  \item[$Q$]
-  \item[$R$]
-  \item[$wStdP$]
-  \item[$wStdV$]
-  \item[$vStd$]
-  \item[$u$]
-  \item[$PP$] 
+  \item[$P$] A $2\times 2$ covariance matrix representing the uncertainty of the
+    current EKF estimate. Contains either the predicted covariance
+    $\bar{\Sigma}$ or the updated covariance $\Sigma$, depending on which point
+    in the code execution is at. Used to compute both the Kalman gain $K$ and
+    the covariance after prediction or update.
+  \item[$G$] A multiplier on the noise model for the state transitions.
+  \item[$D$] A multiplier on the noise model for the measurements.
+  \item[$Q$] A $2\times 2$ matrix. The noise model for the state
+    transition. This indicates the estimates that we have made of the true noise
+    in the system for each parameter in the state. In the ideal case, this
+    matrix contains the values of $wStdP^2$ and $wStdV^2$. If the noise is lower
+    than the true noise, then the estimator will be optimistic, and if the noise
+    is higher then it will be pessimistic. Both of these can cause problems,
+    either with overconfidence in bad estimates, or too little confidence in
+    quite a good estimate.
+  \item[$R$] A scalar value. The noise model for the measurements. Indicates an
+    estimate of the true noise on the measurements that we will receive from
+    our simulated sensor. The ideal value for this is the actual noise on the
+    measurements, which is represented by $vStd$.
+  \item[$wStdP$] The true variance of the noise in the position. The noise is
+    added to the system by generating a normally distributed random number with
+    a zero mean and variance~$wStdP$.
+  \item[$wStdV$] The true variance of the noise in the velocity. The noise is
+    added to the system by generating a normally distributed random number with
+    zero mean and variance~$wStdP$.
+  \item[$vStd$] The true variance of the noise in the measurement. This is added
+    to the measurement at each time step by generating a normally distributed
+    random number with zero mean and variance of~$vStd$.
+  \item[$u$] The control applied to the system at each time step, that is, the
+    instantaneous acceleration of the car, which is assumed to be constant
+    between time steps. Setting this to zero will mean that the system is driven
+    by the noise $wStdP$.
+  \item[$PP$] Stores the values of the covariance matrix after the update step
+    at each time step such that they can be plotted later to examine the
+    evolution of the covariance over time.
   \end{description}
+\item 
+  \begin{figure}
+      \subfloat[Normal: $Q=$\texttt{diag}$(0.0001,0.01)$, $R=0.01$.]{
+        \centerline
+        {
+          \includegraphics[width=.43\textwidth]{figures/norm_kalman}
+          \includegraphics[width=.43\textwidth]{figures/norm_covar}
+          \includegraphics[width=.43\textwidth]{figures/norm_error}
+        }
+      }\\
+      \subfloat[High process noise: $Q\times100, R$]{
+        \centerline
+        {
+          \includegraphics[width=.43\textwidth]{figures/highq_kalman}
+          \includegraphics[width=.43\textwidth]{figures/highq_covar}
+          \includegraphics[width=.43\textwidth]{figures/highq_error}
+        }
+
+      }\\
+      \subfloat[Low process noise: $Q/100, R$]{
+        \centerline
+        {
+          \includegraphics[width=.43\textwidth]{figures/lowq_kalman}
+          \includegraphics[width=.43\textwidth]{figures/lowq_covar}
+          \includegraphics[width=.43\textwidth]{figures/lowq_error}
+        }
+
+      }\\
+      \subfloat[High measurement noise: $Q, R\times100$]{
+        \centerline
+        {
+          \includegraphics[width=.43\textwidth]{figures/highr_kalman}
+          \includegraphics[width=.43\textwidth]{figures/highr_covar}
+          \includegraphics[width=.43\textwidth]{figures/highr_error}
+        }
+
+      }
+      \caption{Graphs for different process and measurement noise models, from
+        left to right the Kalman gain, covariance and error.}
+  \end{figure}
+  \begin{figure}
+    \renewcommand{\figurename}{Figure (cont.)}
+    \ContinuedFloat
+      \subfloat[Low measurement noise: $Q,R/100$]{
+        \centerline
+        {
+          \includegraphics[width=.43\textwidth]{figures/lowr_kalman}
+          \includegraphics[width=.43\textwidth]{figures/lowr_covar}
+          \includegraphics[width=.43\textwidth]{figures/lowr_error}
+        }
+      }
+      \caption{Graphs for different process and measurement noise models, from
+        left to right the Kalman gain, covariance and error.}
+  \end{figure}
+\item Changing the value of $P$ and $\hat{x}$ has no noticeable effect on the
+  standard deviation of the error in position or velocity. However, making $P$
+  very small, so that the uncertainty at the start is low, makes the time to
+  convergence increase in the case of the position. Convergence for the velocity
+  seems to take approximately the same amount of time. Making the uncertainty
+  very large seems to have no effect on convergence or error.
 \end{enumerate}
+\newpage
 \subsection{EKF Localisation}
 \begin{enumerate}[resume]
-\item 
+\item The prediction step is used to generate the prior $\overline{bel}(x_t)$,
+  which is our belief about the state of the robot before the measurements are
+  taken into account. The update step integrates $\overline{bel}(x_t)$ and the
+  probability of making the observed measurement.
+  \begin{align}
+    \overline{bel}(x_t)&=\int{p(x_t \mid
+      u_{1:t},x_{t-1})bel(x_{t-1})dx_{t-1}}\\\eqname{Prediction step} \\
+    bel(x_t)&=\eta p(z_t \mid x_t,M)\overline{bel}(x_t)\\\eqname{Update step}\\
+    p(x_t\mid u_{1:t},z_{1:t},\bar{x}_0,M)&=\eta p(z_t \mid x_t,M)\underbrace{\int{p(x_t \mid
+      u_t,x_{t-1})p(x_{t-1} \mid
+      z_{1:t-1},u_{1:t-1},\bar{x}_0,M)dx_{t-1}}}_\text{Prediction Step}\label{eq:q5-3}
+  \end{align}
+  In \eqref{eq:q5-3}, the integral is equivalent to $\overline{bel}(x_t)$, and forms
+  the prediction step. Multiplying this by the normalisation constant and
+  measurement probability $\eta p(z_t \mid x_t,M)$ gives the update step.
 \end{enumerate}
 \section{Results}
 
