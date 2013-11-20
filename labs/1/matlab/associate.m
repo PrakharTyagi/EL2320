@@ -16,29 +16,38 @@
 %           H^i(t)              2X3XN
 function [c,outlier, nu, S, H] = associate(mu_bar,sigma_bar,z_i,M,Lambda_m,Q)
 
-% go over all landmarks in m
 S = [];
 H = [];
 psi = [];
 nu = [];
 Z = [];
+% go over all landmarks in the map M
 for k = 1:size(M,2)
-    % measurement for this landmark
-    Z(:,:,k) = observation_model(mu_bar,M,k);
-    H(:,:,k) = jacobian_observation_model(mu_bar,M,k,Z(:,:,k),1);
+    % based on our predicted position, make a prediction of the measurement
+    % that we should receive, based on the observation model, looking at
+    % the kth landmark on the map.
+    Z(:,k) = observation_model(mu_bar,M,k);
+    % calculate the linearisation of the observation model around the
+    % point that was predicted in the previous step
+    H(:,:,k) = jacobian_observation_model(mu_bar,M,k,Z(:,k),1);
     S(:,:,k) = H(:,:,k)*sigma_bar*H(:,:,k)' + Q;
-    nu(:,:,k) = z_i - Z(:,:,k);
+    nu(:,k) = z_i - Z(:,k);
+    nu(2,k) = mod(nu(2,k)+pi,2*pi)-pi;
 
-    psi(k) = det(2*pi*S(:,:,k))^(-1/2)*exp((-1/2)*nu(:,:,k)'*inv(S(:,:,k))*nu(:,:,k));
+    psi(k) = det(2*pi*S(:,:,k))^(-1/2)*exp((-1/2)*nu(:,k)'*inv(S(:,:,k))*nu(:,k));
 end
+
 [cmag c] = max(psi); % c is the arg, cmag is the value of that maximal index
-if cmag > Lambda_m
+
+nu_i = nu(:,c);
+S_i = S(:,:,c);
+D_m = nu_i'*inv(S_i)*nu;
+
+if D_m > Lambda_m
     outlier = 1;
 else
     outlier = 0;
 end
-%nu = nu(:,:,c);
-%S = S(:,:,c);
-%H = H(:,:,c);
+
 
 end
