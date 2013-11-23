@@ -12,7 +12,6 @@
 %           mu(t)           3X1
 %           sigma(t)        3X3
 function [mu,sigma] = batch_update(mu_bar,sigma_bar,H_bar,Q_bar,nu_bar)
-
 gain = sigma_bar*H_bar'*inv(H_bar*sigma_bar*H_bar'+Q_bar);
 mu = mu_bar + gain*nu_bar;
 sigma = sigma_bar - gain*H_bar*sigma_bar;
