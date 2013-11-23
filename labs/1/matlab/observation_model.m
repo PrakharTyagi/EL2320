@@ -11,7 +11,9 @@ function h = observation_model(x,M,j)
 
 dx = M(1,j)-x(1);
 dy = M(2,j)-x(2);
+theta = atan2(dy,dx)-x(3);
+normtheta = mod(theta+pi,2*pi)-pi;
 h = [sqrt(dy^2 + dx^2);
-     atan2(dy,dx)-x(3)];
+     normtheta];
 
 end

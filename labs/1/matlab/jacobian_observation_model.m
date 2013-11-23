@@ -13,7 +13,7 @@ function H = jacobian_observation_model(mu_bar,M,j,z,i)
 dx = mu_bar(1)-M(1,j);
 dy = mu_bar(2)-M(2,j);
 
-H=[dx/z(i) dy/z(i) 0;    
-   -dy/(z(i)^2) dx/(z(i)^2) -1]
+H=[dx/z(1) dy/z(1) 0;
+   -dy/(z(1)^2) dx/(z(1)^2) -1];
 
 end

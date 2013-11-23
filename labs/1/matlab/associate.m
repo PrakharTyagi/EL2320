@@ -41,13 +41,7 @@ end
 
 nu_i = nu(:,c);
 S_i = S(:,:,c);
-D_m = nu_i'*inv(S_i)*nu;
-
-if D_m > Lambda_m
-    outlier = 1;
-else
-    outlier = 0;
-end
-
+D_m = nu_i'*inv(S_i)*nu_i;
+outlier = logical(D_m >= Lambda_m);
 
 end
