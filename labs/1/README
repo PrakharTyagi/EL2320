@@ -1,0 +1,11 @@
+Matlab code is contained in the `code` directory. To run a simulation
+using an EKF, use the `runlocalisation_track` function. Examples of
+the parameters to the function can be found in `init.m`, along with
+various initialisation parameters. To use different maps, you should
+uncomment the relevant parts of the file, which contain the process
+and measurement noise models. The `kf_car` function is a simple
+simulation of a car using a kalman filter to estimate its position.
+
+The top level directory contains a report with answers to questions
+regarding the workings of the KF and EKF and some simple
+explanation of the plots that result from the simulation.

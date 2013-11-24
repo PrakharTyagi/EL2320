@@ -3,7 +3,7 @@
 \usepackage{fontspec}
 \usepackage{amsmath}
 \usepackage{enumitem}
-\usepackage{subfig}
+\usepackage[subrefformat=parens,labelformat=parens]{subfig}
 \usepackage[a4paper,margin=1in]{geometry}
 
 \newcommand{\eqname}[1]{\tag*{#1}} % tag an equation with a name
@@ -12,7 +12,7 @@
 \setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
 
 \title{Applied Estimation Lab 1---Extended Kalman Filter}
-\author{Michal Staniaszek \\ 901207-1495}
+\author{Michal Staniaszek}
 
 \begin{document}
 \maketitle
@@ -206,8 +206,10 @@ case in the non-scalar case.
     $\bar{\Sigma}$ or the updated covariance $\Sigma$, depending on which point
     in the code execution is at. Used to compute both the Kalman gain $K$ and
     the covariance after prediction or update.
-  \item[$G$] A multiplier on the noise model for the state transitions.
-  \item[$D$] A multiplier on the noise model for the measurements.
+  \item[$G$] A multiplier on the noise model for the state transitions to get
+    the correct matrix dimensionality.
+  \item[$D$] A multiplier on the noise model for the measurements to get the
+    correct matrix dimensionality.
   \item[$Q$] A $2\times 2$ matrix. The noise model for the state
     transition. This indicates the estimates that we have made of the true noise
     in the system for each parameter in the state. In the ideal case, this
@@ -237,45 +239,98 @@ case in the non-scalar case.
     at each time step such that they can be plotted later to examine the
     evolution of the covariance over time.
   \end{description}
-\item 
+\item In Figure~\subref*{fig:hiq}, we increase $Q$, giving a higher process
+  noise estimate. From this we would expect that our measurements would be
+  trusted more, as our motion is uncertain. This is confirmed by comparing the
+  Kalman gain with Figure~\subref*{fig:def}. We see that the steady state gain
+  for both range~$K1$, and speed~$K2$ is higher, so we give the measurements
+  higher weight. As a result of the higher process noise, the tracking of the
+  speed suffers, it is much more difficult to predict. With low process noise,
+  we expect measurements to receive a lower weight, as our process is more
+  predictable. This is clear from the low gain in both position and velocity in
+  Figure~\subref*{fig:loq}. Additionally, we have a lower steady state
+  covariance as we are more certain about how the system evolves. As a result of
+  the low gain, tracking of the true state is smoother, and has a slight
+  lag. $R$ represents the measurement noise model. A higher measurement noise
+  means that we put less weight on our measurements as they are unreliable. High
+  measurement noise keeps the gain low, and has a large effect on the
+  convergence time of the system. Tracking of the true state is smooth, as the
+  measurements do not force the estimate to move much
+  (Figure~\subref{fig:hir}). With low measurement noise, the gain is high, and
+  so measurements have a large effect on the system. This results in a rapidly
+  changing estimate of both the position and the speed. When both $Q$
+  and $R$ are high, we are uncertain about both the process and the
+  measurements. As a result, the Kalman gain is low, and the steady state
+  covariance is high. The result is slow convergence to the true state, as the
+  update is more cautious about updates. With both low, we have more
+  contribution from the measurements, and a very low steady state covariance. In
+  both cases, the tracking of the speed does not undergo any significant change,
+  which can be seen in Figure~\ref{fig:prop}.
+
+  \begin{figure}
+    \subfloat[High noise: $Q\times 100,R\times 100$]{
+      \centerline
+      {
+        \includegraphics[width=.43\textwidth]{figures/kf/rqhigh_kalman}
+        \includegraphics[width=.43\textwidth]{figures/kf/rqhigh_covar}
+        \includegraphics[width=.43\textwidth]{figures/kf/rqhigh_error}
+      }
+    }\\
+    \subfloat[Low noise: $Q/100,R/100$]{
+      \centerline
+      {
+        \includegraphics[width=.43\textwidth]{figures/kf/rqlow_kalman}
+        \includegraphics[width=.43\textwidth]{figures/kf/rqlow_covar}
+        \includegraphics[width=.43\textwidth]{figures/kf/rqlow_error}
+      }
+    }
+    \caption{Graphs for different process and measurement noise models, from
+        left to right the Kalman gain, covariance and error. By default,
+        $Q=$\texttt{diag}$(0.0001,0.01)$, $R=0.01$. Here, we change both $Q$ and
+      $R$ by the same proportion.}
+    \label{fig:prop}
+  \end{figure}
+  
   \begin{figure}
       \subfloat[Normal: $Q=$\texttt{diag}$(0.0001,0.01)$, $R=0.01$.]{
         \centerline
         {
-          \includegraphics[width=.43\textwidth]{figures/norm_kalman}
-          \includegraphics[width=.43\textwidth]{figures/norm_covar}
-          \includegraphics[width=.43\textwidth]{figures/norm_error}
+          \includegraphics[width=.43\textwidth]{figures/kf/norm_kalman}
+          \includegraphics[width=.43\textwidth]{figures/kf/norm_covar}
+          \includegraphics[width=.43\textwidth]{figures/kf/norm_error}
         }
+        \label{fig:def}
       }\\
       \subfloat[High process noise: $Q\times100, R$]{
         \centerline
         {
-          \includegraphics[width=.43\textwidth]{figures/highq_kalman}
-          \includegraphics[width=.43\textwidth]{figures/highq_covar}
-          \includegraphics[width=.43\textwidth]{figures/highq_error}
+          \includegraphics[width=.43\textwidth]{figures/kf/highq_kalman}
+          \includegraphics[width=.43\textwidth]{figures/kf/highq_covar}
+          \includegraphics[width=.43\textwidth]{figures/kf/highq_error}
         }
-
+        \label{fig:hiq}
       }\\
       \subfloat[Low process noise: $Q/100, R$]{
         \centerline
         {
-          \includegraphics[width=.43\textwidth]{figures/lowq_kalman}
-          \includegraphics[width=.43\textwidth]{figures/lowq_covar}
-          \includegraphics[width=.43\textwidth]{figures/lowq_error}
+          \includegraphics[width=.43\textwidth]{figures/kf/lowq_kalman}
+          \includegraphics[width=.43\textwidth]{figures/kf/lowq_covar}
+          \includegraphics[width=.43\textwidth]{figures/kf/lowq_error}
         }
-
+        \label{fig:loq}
       }\\
       \subfloat[High measurement noise: $Q, R\times100$]{
         \centerline
         {
-          \includegraphics[width=.43\textwidth]{figures/highr_kalman}
-          \includegraphics[width=.43\textwidth]{figures/highr_covar}
-          \includegraphics[width=.43\textwidth]{figures/highr_error}
+          \includegraphics[width=.43\textwidth]{figures/kf/highr_kalman}
+          \includegraphics[width=.43\textwidth]{figures/kf/highr_covar}
+          \includegraphics[width=.43\textwidth]{figures/kf/highr_error}
         }
-
+        \label{fig:hir}
       }
       \caption{Graphs for different process and measurement noise models, from
-        left to right the Kalman gain, covariance and error.}
+        left to right the Kalman gain, covariance and error. By default,
+        $Q=$\texttt{diag}$(0.0001,0.01)$, $R=0.01$.}
   \end{figure}
   \begin{figure}
     \renewcommand{\figurename}{Figure (cont.)}
@@ -283,20 +338,31 @@ case in the non-scalar case.
       \subfloat[Low measurement noise: $Q,R/100$]{
         \centerline
         {
-          \includegraphics[width=.43\textwidth]{figures/lowr_kalman}
-          \includegraphics[width=.43\textwidth]{figures/lowr_covar}
-          \includegraphics[width=.43\textwidth]{figures/lowr_error}
+          \includegraphics[width=.43\textwidth]{figures/kf/lowr_kalman}
+          \includegraphics[width=.43\textwidth]{figures/kf/lowr_covar}
+          \includegraphics[width=.43\textwidth]{figures/kf/lowr_error}
         }
+        \label{fig:lor}
       }
       \caption{Graphs for different process and measurement noise models, from
-        left to right the Kalman gain, covariance and error.}
+        left to right the Kalman gain, covariance and error. By default,
+        $Q=$\texttt{diag}$(0.0001,0.01)$, $R=0.01$.}
   \end{figure}
-\item Changing the value of $P$ and $\hat{x}$ has no noticeable effect on the
-  standard deviation of the error in position or velocity. However, making $P$
-  very small, so that the uncertainty at the start is low, makes the time to
-  convergence increase in the case of the position. Convergence for the velocity
-  seems to take approximately the same amount of time. Making the uncertainty
-  very large seems to have no effect on convergence or error.
+
+\item Changes in the values in $P$ affect the belief state in the initial
+  position. If $P$ is very high, the initial uncertainty in our estimated
+  position~$\hat{x}$ is very large. When this is the case, the Kalman gain rises
+  rapidly to take into account the measurements, and the systems converges in
+  around the same number of time steps as with some lower values of
+  $P$. Particularly noticeable is a peak in the gain for the velocity at time
+  step 2, after which the gain decays quickly, indicating that the state
+  uncertainty is decreasing, so it can be taken into account more. For $K>
+  100$, the maximum value of the peak does not exceed 10. If $P$ is low, then
+  we believe that our initial $\hat{x}$ is a very good estimate of the true
+  state. This can have an effect on the convergence of the system---if the true
+  state is actually far from the initial estimate of $\hat{x}$, then the state
+  transition is trusted more than it should be, leading to a longer convergence
+  time, due to the need to compensate for the excessive initial certainty.
 \end{enumerate}
 \newpage
 \subsection{EKF Localisation}
@@ -309,14 +375,159 @@ case in the non-scalar case.
     \overline{bel}(x_t)&=\int{p(x_t \mid
       u_{1:t},x_{t-1})bel(x_{t-1})dx_{t-1}}\\\eqname{Prediction step} \\
     bel(x_t)&=\eta p(z_t \mid x_t,M)\overline{bel}(x_t)\\\eqname{Update step}\\
-    p(x_t\mid u_{1:t},z_{1:t},\bar{x}_0,M)&=\eta p(z_t \mid x_t,M)\underbrace{\int{p(x_t \mid
+    p(x_t\mid u_{1:t},z_{1:t},\bar{x}_0,M)&=\underbrace{\eta p(z_t \mid x_t,M)\underbrace{\int{p(x_t \mid
       u_t,x_{t-1})p(x_{t-1} \mid
-      z_{1:t-1},u_{1:t-1},\bar{x}_0,M)dx_{t-1}}}_\text{Prediction Step}\label{eq:q5-3}
+      z_{1:t-1},u_{1:t-1},\bar{x}_0,M)dx_{t-1}}}_\text{Prediction
+    Step}}_\text{Update step}\label{eq:q5-3}
   \end{align}
   In \eqref{eq:q5-3}, the integral is equivalent to $\overline{bel}(x_t)$, and forms
   the prediction step. Multiplying this by the normalisation constant and
   measurement probability $\eta p(z_t \mid x_t,M)$ gives the update step.
+\item The assumption that measurements are independent of each other is valid,
+  so long as some conditions are fulfilled. If we know that the noise is
+  uncorrelated, then the measurements are unbiased, as the noise on each
+  measurement is white. This means that we can expect measurements to be evenly
+  distributed between values which are too small and too large. If this holds,
+  then as the number of measurements tends towards infinity, we will be closer
+  and closer to the true measurement value. If the sensor noise is correlated,
+  then we cannot make an independence assumption. In general, the measurements
+  at a single time step have a single dependency, the true state at that time
+  step. However, each measurement is unaffected by the previous ones---assuming
+  the sensor behaves in the same way for each measurement.
+\item The value of $\delta_m$ is within the bounds $[0,1]$. The value of
+  $\delta_m$ defines the confidence level in the sensor return values. A high
+  value indicates high confidence in the measurements, which means that only
+  values at the very ends of the tails will be rejected. A low value will result
+  in more rejected associations, as there is less confidence in the
+  measurements, so values closer to the centre of the distribution will also be
+  rejected. If all measurements are reliable, only coming from actual features,
+  then we should set $\lambda_m$ to be high, such that only measurements at the
+  extreme tails will be rejected. If the measurements are unreliable, then we
+  should use a lower value of $\lambda_m$ so as to ensure that only those
+  measurements in which we have a high confidence are kept and integrated into
+  our belief.
+\item The sequential update has problems with noisy measurements, as they can
+  cause inconsistencies to arise in the belief state. That is, if we receive a
+  noisy measurement, and believe that it is a good measurement, we will
+  integrate it into our belief, and the mean and covariance will be adjusted
+  accordingly, with the mean moving towards the measurement, and the covariance
+  being reduced. However, in actual fact, we have not really decreased the
+  covariance, as the measurement is noisy---we have moved the mean into a
+  position which could actually be \emph{less} likely than the previous
+  estimate. As a result, all subsequent measurements are affected, and the mean
+  jumps around, with noise having a large effect. This effect can be mitigated
+  by using the batch update, which compensates for this by averaging the noise
+  by doing a single update for all of the measurements.
+\item In the pseudocode, we perform a computation of the expected measurement
+  $\hat{z}_t^k$, the linearised measurement model~$H_t^k$, and the measurement
+  uncertainty~$S_t^k$. These computations need to be done only a single time for
+  each landmark $k$, but they are instead done repeatedly for each observation
+  $i$. This results in $ki$ computations of these values, whereas only $k$
+  computations are needed. Pre-computing these values and then performing the
+  computation of $\nu_t^{i,k}$, $\nu_t^{i,k}$, and $\psi_t^{i,k}$ will result in
+  a significant reduction in the computation time required, especially if there
+  are a large number of observations.
+\item In the batch algorithm, $\bar{\nu}_t$ and $\bar{H}_t$ have dimensions
+  $2i\times 1$ and $2i\times 3$ respectively, where $i$ is the number of
+  observations, compared to $2\times 1$ and $2\times 3$ for the sequential
+  algorithm. This indicates that in the sequential update, each observation is
+  factored into the update individually, whereas in the batch case, the
+  observations are grouped together and then $K_t$, $\mu_t$ and $\Sigma_t$ are
+  computed in one go with the single large matrix. As a result, the batch update
+  is more expensive than the multiple sequential updates, as the matrix
+  dimensions are much larger. The inversion, which has approximately
+  $\mathcal{O}(n^3)$ complexity in the number of elements, becomes particularly
+  costly.
 \end{enumerate}
 \section{Results}
+Plots in this section are colour coded. Green is the ground truth, the actual
+state of the robot. Red is the state of the robot estimated by the EKF. Blue is
+the state of the robot based on the odometry readings.
+
+The results of running the EKF with sequential update on the first map can be
+seen in Figure~\ref{fig:map1}. We can see from the covariance graph that between
+200 and 300 time steps there are two peaks in the uncertainty. This roughly
+corresponds to the two corners on the right side of the map. Since this part of
+the map is symmetric, the uncertainty increases as it is possible to be in
+either of those two places. The overall error is very small, indicating that the
+EKF performs very well in this example.
+
+On the second map, seen in Figure~\ref{fig:map2}, we have the problem of
+outliers in the measurements, coming from spurious measurements or sensor
+error. While the odometry is of bad quality as always, it is very important that
+we properly determine the uncertainty, as if we are overly reliant on
+measurements, the filter will diverge, with large deviations from the true path
+of the robot. With an 100 times larger uncertainty in the process model, the
+filter diverges very quickly and gets stuck at the bottom of the ellipse. With
+10 times larger uncertainty, the tracking is reasonable until the top left part,
+where the filter gets stuck. When the noise model is correctly chosen, outliers
+are correctly detected and the filter tracks the true state well. We see an
+interesting pattern in the covariance, which corresponds to encountering each of
+the landmarks. Each time we see one, the uncertainty increases, as the position
+and heading are somewhat correlated with the measured position of the landmark.
+
+The third map has no outliers, but instead has problems with high noise
+measurements affecting the sequential update. Figure~\subref*{fig:m3seq} and (b)
+show the runs for sequential and batch updates of the EKF respectively. Using
+the sequential update, the noisy measurements result in a large deviation from
+the true state. In contrast, with the batch update there is only slight
+deviation from the true state. We again see a sawtooth pattern in the
+covariance, corresponding to each landmark being encountered. The $x$ and $y$
+covariances appear to follow a sine curve. This may be as a result of the
+computation of the position from the measurements, which include sinusoids.
+
+\begin{figure}
+  \centerline
+  {
+    \includegraphics[width=.43\textwidth]{figures/ekf/map1_seq_error}
+    \includegraphics[width=.43\textwidth]{figures/ekf/map1_seq_sigma}
+    \includegraphics[width=.43\textwidth]{figures/ekf/map1_seq_motion}
+  }
+  \caption{A run of the EKF on the first test map. This gives an indication of
+    the poor quality of odometry data. The noise models used were
+    $R=$\texttt{diag}$(0.01^2, 0.01^2, 0.0175^2)$, $Q=$\texttt{diag}$(0.01^2,
+    0.0175^2)$.}
+  \label{fig:map1}
+\end{figure}
+
+
+\begin{figure}
+  \centerline
+  {
+    \includegraphics[width=.43\textwidth]{figures/ekf/map2_seq_error}
+    \includegraphics[width=.43\textwidth]{figures/ekf/map2_seq_sigma}
+    \includegraphics[width=.43\textwidth]{figures/ekf/map2_seq_motion}
+  }
+  \caption{Results of running the EKF on the second test map. The noise models
+    used were $R=$\texttt{diag}$(0.01^2, 0.01^2, 0.0175^2)$,
+    $Q=$\texttt{diag}$(0.2^2, 0.2^2)$. In this case, the noise models are
+    important as outliers can cause divergence if not correctly chosen.}
+  \label{fig:map2}
+\end{figure}
+\begin{figure}
+  \subfloat[Sequential update]{
+    \centerline
+    {
+      \includegraphics[width=.43\textwidth]{figures/ekf/map3_seq_error}
+      \includegraphics[width=.43\textwidth]{figures/ekf/map3_seq_sigma}
+      \includegraphics[width=.43\textwidth]{figures/ekf/map3_seq_motion}
+    }
+    \label{fig:m3seq}
+  }\\
+  \subfloat[Batch update]{
+    \centerline
+    {
+      \includegraphics[width=.43\textwidth]{figures/ekf/map3_batch_error}
+      \includegraphics[width=.43\textwidth]{figures/ekf/map3_batch_sigma}
+      \includegraphics[width=.43\textwidth]{figures/ekf/map3_batch_motion}
+    }
+    \label{fig:m3batch}
+  }
+  
+  \caption{Results of running the EKF on the third test map. The noise models
+    used were $R=$\texttt{diag}$(1, 1, 1)$, $Q=$\texttt{diag}$(0.1^2,
+    0.1^2)$.}
+  \label{fig:map3}
+\end{figure}
 
 \end{document}
