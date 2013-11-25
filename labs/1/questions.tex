@@ -3,6 +3,7 @@
 \usepackage{fontspec}
 \usepackage{amsmath}
 \usepackage{enumitem}
+\usepackage{hyperref}
 \usepackage[subrefformat=parens,labelformat=parens]{subfig}
 \usepackage[a4paper,margin=1in]{geometry}
 
@@ -72,13 +73,15 @@ As $q_t$ tends to infinity, we get
 \end{align*}
 So, as $q_t$ increases, the Kalman gain tends towards zero, meaning that
 measurements will not be considered at all in the update step. This is also the
-case in the non-scalar case.
+case in the non-scalar case. This can result in a longer time to convergence.
 \item For the measurements to have an increased effect, the Kalman gain must
   increase. As seen above, as $q_t\to \infty$, $k_t\to 0$. It is easy to see
   that as $q_t \to 0$, $k_t\to \frac{1}{c_t}$. This indicates that reducing the
-  uncertainty $Q_t$ in the measurements will increase the gain. In addition,
-  the value of $c_t$ (or structure of $C_t$) may also have some effect on the
-  gain.
+  uncertainty $Q_t$ in the measurements will increase the gain. In addition, the
+  value of $c_t$ (or structure of $C_t$) may also have some effect on the
+  gain. If the process noise increases, we have greater uncertainty in the
+  motion, and as a result the Kalman gain will increase, as the uncertain motion
+  has to be compensated for by the comparatively reliable measurements.
 \item During prediction, the belief uncertainty increases. Intuitively, this
   happens because we are uncertain about the state transitions that are being
   made, depending on the uncertainty $\epsilon_t$, modeled by $R_t$. Because we
@@ -145,7 +148,8 @@ case in the non-scalar case.
   information about its position, as that is determined by the range measurement
   alone in the situation with which we are presented. The distribution of
   possible positions is still a ring, but we now know that the orientation of
-  the robot is dependent on its position on the ring.
+  the robot is dependent on its position on the ring. Since there is also
+  uncertainty in the bearing, the Gaussian representation becomes a bell shape.
 \item Since we have good motion estimation, we know approximately how far we
   will move in the direction of motion. However, because the initial bearing is
   uncertain, the uncertainty on the Gaussian perpendicular to the direction of
@@ -221,16 +225,16 @@ case in the non-scalar case.
   \item[$R$] A scalar value. The noise model for the measurements. Indicates an
     estimate of the true noise on the measurements that we will receive from
     our simulated sensor. The ideal value for this is the actual noise on the
-    measurements, which is represented by $vStd$.
-  \item[$wStdP$] The true variance of the noise in the position. The noise is
+    measurements, which is represented by~$vStd$.
+  \item[$wStdP$] The true standard deviation of the noise in the position. The noise is
     added to the system by generating a normally distributed random number with
-    a zero mean and variance~$wStdP$.
-  \item[$wStdV$] The true variance of the noise in the velocity. The noise is
+    a zero mean and variance~$wStdP^2$.
+  \item[$wStdV$] The true standard deviation of the noise in the velocity. The noise is
     added to the system by generating a normally distributed random number with
-    zero mean and variance~$wStdP$.
-  \item[$vStd$] The true variance of the noise in the measurement. This is added
+    zero mean and variance~$wStdP^2$.
+  \item[$vStd$] The true deviation of the noise in the measurement. This is added
     to the measurement at each time step by generating a normally distributed
-    random number with zero mean and variance of~$vStd$.
+    random number with zero mean and variance of~$vStd^2$.
   \item[$u$] The control applied to the system at each time step, that is, the
     instantaneous acceleration of the car, which is assumed to be constant
     between time steps. Setting this to zero will mean that the system is driven
@@ -254,12 +258,12 @@ case in the non-scalar case.
   lag. $R$ represents the measurement noise model. A higher measurement noise
   means that we put less weight on our measurements as they are unreliable. High
   measurement noise keeps the gain low, and has a large effect on the
-  convergence time of the system. Tracking of the true state is smooth, as the
-  measurements do not force the estimate to move much
-  (Figure~\subref{fig:hir}). With low measurement noise, the gain is high, and
-  so measurements have a large effect on the system. This results in a rapidly
-  changing estimate of both the position and the speed. When both $Q$
-  and $R$ are high, we are uncertain about both the process and the
+  convergence time of the system. Figure~\subref*{fig:hir} shows that tracking
+  of the true state is smooth, as the measurements do not force the estimate to
+  move much. With low measurement noise, the gain is high, and so measurements
+  have a large effect on the system. This results in a rapidly changing estimate
+  of both the position and the speed, as seen in Figure~\subref*{fig:lor}. When
+  both $Q$ and $R$ are high, we are uncertain about both the process and the
   measurements. As a result, the Kalman gain is low, and the steady state
   covariance is high. The result is slow convergence to the true state, as the
   update is more cautious about updates. With both low, we have more
@@ -286,13 +290,13 @@ case in the non-scalar case.
     }
     \caption{Graphs for different process and measurement noise models, from
         left to right the Kalman gain, covariance and error. By default,
-        $Q=$\texttt{diag}$(0.0001,0.01)$, $R=0.01$. Here, we change both $Q$ and
+        $Q=$ \texttt{diag}$(0.0001,0.01)$, $R=0.01$. Here, we change both $Q$ and
       $R$ by the same proportion.}
     \label{fig:prop}
   \end{figure}
   
   \begin{figure}
-      \subfloat[Normal: $Q=$\texttt{diag}$(0.0001,0.01)$, $R=0.01$.]{
+      \subfloat[Normal: $Q=$ \texttt{diag}$(0.0001,0.01)$, $R=0.01$.]{
         \centerline
         {
           \includegraphics[width=.43\textwidth]{figures/kf/norm_kalman}
@@ -330,7 +334,7 @@ case in the non-scalar case.
       }
       \caption{Graphs for different process and measurement noise models, from
         left to right the Kalman gain, covariance and error. By default,
-        $Q=$\texttt{diag}$(0.0001,0.01)$, $R=0.01$.}
+        $Q=$ \texttt{diag}$(0.0001,0.01)$, $R=0.01$.}
   \end{figure}
   \begin{figure}
     \renewcommand{\figurename}{Figure (cont.)}
@@ -346,7 +350,7 @@ case in the non-scalar case.
       }
       \caption{Graphs for different process and measurement noise models, from
         left to right the Kalman gain, covariance and error. By default,
-        $Q=$\texttt{diag}$(0.0001,0.01)$, $R=0.01$.}
+        $Q=$ \texttt{diag}$(0.0001,0.01)$, $R=0.01$.}
   \end{figure}
 
 \item Changes in the values in $P$ affect the belief state in the initial
@@ -395,38 +399,38 @@ case in the non-scalar case.
   step. However, each measurement is unaffected by the previous ones---assuming
   the sensor behaves in the same way for each measurement.
 \item The value of $\delta_m$ is within the bounds $[0,1]$. The value of
-  $\delta_m$ defines the confidence level in the sensor return values. A high
+  $\delta_m$ defines the level of confidence in the sensor return values. A high
   value indicates high confidence in the measurements, which means that only
   values at the very ends of the tails will be rejected. A low value will result
-  in more rejected associations, as there is less confidence in the
-  measurements, so values closer to the centre of the distribution will also be
-  rejected. If all measurements are reliable, only coming from actual features,
-  then we should set $\lambda_m$ to be high, such that only measurements at the
-  extreme tails will be rejected. If the measurements are unreliable, then we
-  should use a lower value of $\lambda_m$ so as to ensure that only those
-  measurements in which we have a high confidence are kept and integrated into
-  our belief.
+  in more rejections, as there is less confidence in the measurements, so values
+  closer to the centre of the distribution will also be rejected, meaning that
+  only values close to the centre of the distribution are retained. If all
+  measurements are reliable, only coming from actual features, then we should
+  set $\lambda_m$ to be high, such that only measurements at the extreme tails
+  will be rejected. If the measurements are unreliable, then we should use a
+  lower value of $\lambda_m$ so as to ensure that only those measurements in
+  which we have a high confidence are kept and integrated into our belief.
 \item The sequential update has problems with noisy measurements, as they can
   cause inconsistencies to arise in the belief state. That is, if we receive a
-  noisy measurement, and believe that it is a good measurement, we will
-  integrate it into our belief, and the mean and covariance will be adjusted
-  accordingly, with the mean moving towards the measurement, and the covariance
-  being reduced. However, in actual fact, we have not really decreased the
-  covariance, as the measurement is noisy---we have moved the mean into a
-  position which could actually be \emph{less} likely than the previous
-  estimate. As a result, all subsequent measurements are affected, and the mean
-  jumps around, with noise having a large effect. This effect can be mitigated
-  by using the batch update, which compensates for this by averaging the noise
-  by doing a single update for all of the measurements.
-\item In the pseudocode, we perform a computation of the expected measurement
-  $\hat{z}_t^k$, the linearised measurement model~$H_t^k$, and the measurement
-  uncertainty~$S_t^k$. These computations need to be done only a single time for
-  each landmark $k$, but they are instead done repeatedly for each observation
-  $i$. This results in $ki$ computations of these values, whereas only $k$
-  computations are needed. Pre-computing these values and then performing the
-  computation of $\nu_t^{i,k}$, $\nu_t^{i,k}$, and $\psi_t^{i,k}$ will result in
-  a significant reduction in the computation time required, especially if there
-  are a large number of observations.
+  noisy measurement, we will integrate it into our belief, and the mean and
+  covariance will be adjusted accordingly, with the mean moving towards the
+  measurement, and the covariance being reduced. However, in actual fact, we
+  have not really decreased the covariance, as the measurement is noisy---we
+  have moved the mean into a position which could actually be \emph{less} likely
+  than the previous estimate. As a result, all subsequent measurements are
+  affected, by this change in the mean, being taken into account less than they
+  should be. This effect can be mitigated by using the batch update,
+  which compensates for this by averaging the noise by doing a single update for
+  all of the measurements.
+\item In the batch update, we perform a computation of the expected
+  measurement~$\hat{z}_t^k$, the linearised measurement model~$H_t^k$, and the
+  measurement uncertainty~$S_t^k$. These computations need to be done only a
+  single time for each landmark $k$, but they are instead done repeatedly for
+  each observation $i$. This results in $ki$ computations of these values,
+  whereas only $k$ computations are needed. Pre-computing these values and then
+  performing the computation of $\nu_t^{i,k}$, $\nu_t^{i,k}$, and $\psi_t^{i,k}$
+  will result in a significant reduction in the computation time required,
+  especially if there are a large number of observations.
 \item In the batch algorithm, $\bar{\nu}_t$ and $\bar{H}_t$ have dimensions
   $2i\times 1$ and $2i\times 3$ respectively, where $i$ is the number of
   observations, compared to $2\times 1$ and $2\times 3$ for the sequential
@@ -467,13 +471,13 @@ the landmarks. Each time we see one, the uncertainty increases, as the position
 and heading are somewhat correlated with the measured position of the landmark.
 
 The third map has no outliers, but instead has problems with high noise
-measurements affecting the sequential update. Figure~\subref*{fig:m3seq} and (b)
-show the runs for sequential and batch updates of the EKF respectively. Using
-the sequential update, the noisy measurements result in a large deviation from
-the true state. In contrast, with the batch update there is only slight
-deviation from the true state. We again see a sawtooth pattern in the
-covariance, corresponding to each landmark being encountered. The $x$ and $y$
-covariances appear to follow a sine curve. This may be as a result of the
+measurements affecting the sequential update. Figure~\subref*{fig:m3seq} and
+\subref{fig:m3batch} show the runs for sequential and batch updates of the EKF
+respectively. Using the sequential update, the noisy measurements result in a
+large deviation from the true state. In contrast, with the batch update there is
+only slight deviation from the true state. We again see a sawtooth pattern in
+the covariance, corresponding to each landmark being encountered. The $x$ and
+$y$ covariances appear to follow a sine curve. This may be as a result of the
 computation of the position from the measurements, which include sinusoids.
 
 \begin{figure}
@@ -485,7 +489,7 @@ computation of the position from the measurements, which include sinusoids.
   }
   \caption{A run of the EKF on the first test map. This gives an indication of
     the poor quality of odometry data. The noise models used were
-    $R=$\texttt{diag}$(0.01^2, 0.01^2, 0.0175^2)$, $Q=$\texttt{diag}$(0.01^2,
+    $R=$ \texttt{diag}$(0.01^2, 0.01^2, 0.0175^2)$, $Q=$ \texttt{diag}$(0.01^2,
     0.0175^2)$.}
   \label{fig:map1}
 \end{figure}
@@ -499,8 +503,8 @@ computation of the position from the measurements, which include sinusoids.
     \includegraphics[width=.43\textwidth]{figures/ekf/map2_seq_motion}
   }
   \caption{Results of running the EKF on the second test map. The noise models
-    used were $R=$\texttt{diag}$(0.01^2, 0.01^2, 0.0175^2)$,
-    $Q=$\texttt{diag}$(0.2^2, 0.2^2)$. In this case, the noise models are
+    used were $R=$~\texttt{diag}$(0.01^2, 0.01^2, 0.0175^2)$,
+    $Q=$~\texttt{diag}$(0.2^2, 0.2^2)$. In this case, the noise models are
     important as outliers can cause divergence if not correctly chosen.}
   \label{fig:map2}
 \end{figure}
@@ -525,8 +529,9 @@ computation of the position from the measurements, which include sinusoids.
   }
   
   \caption{Results of running the EKF on the third test map. The noise models
-    used were $R=$\texttt{diag}$(1, 1, 1)$, $Q=$\texttt{diag}$(0.1^2,
-    0.1^2)$.}
+    used were $R=$ \texttt{diag}$(1, 1, 1)$, $Q=$ \texttt{diag}$(0.1^2,
+    0.1^2)$. The batch update and sequential update methods result in different
+    estimates due to noisy measurements.}
   \label{fig:map3}
 \end{figure}
 
