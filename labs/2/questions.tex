@@ -1,0 +1,86 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage{fontspec}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage[subrefformat=parens,labelformat=parens]{subfig}
+\usepackage[a4paper,margin=1in]{geometry}
+
+\newcommand{\eqname}[1]{\tag*{#1}} % tag an equation with a name
+
+\defaultfontfeatures{Mapping=tex-text}
+\setromanfont[Ligatures={Common},Numbers={Lining}]{Linux Libertine}
+
+\title{Applied Estimation Lab 2---Particle Filter}
+\author{Michal Staniaszek}
+
+\begin{document}
+\maketitle
+\section{Part I---Preparatory Questions}
+\begin{enumerate}
+\item Particles are used to represent a hypothesis of a single possible state of
+  the system, which are drawn from some probability distribution. A single
+  particle alone is not particularly useful, as it has no explanatory power
+  about the possbile distribution of the true state. Instead, a large number of
+  particles are used to represent belief in the form of a particle cloud.
+\item The \emph{importance weight} is a weight assigned to each particle to
+  indicate its expressive power as a part of the particle cloud. Particle
+  weights depend on the measurement update. If the measurements that we find by
+  simulating a set of measurements from the particle's state closely match the
+  measurements given by our true system, the particle is given a proportionally
+  higher weight. If the measurements are a poor match, then it receives a low
+  weight. As such, a higher weight indicates a higher probability of the system
+  being in that state. The \emph{target distribution} is the true state of the
+  system. We do not know what the actual distribution of the true state is, but
+  if it were possible to have an infinite number of particles, then we could
+  represent the target distribution exactly. The \emph{proposal distribution} is
+  the distribution that is represented by the particles. This distribution is
+  the target distribution, approximated by a finite number of particles. In the
+  particle filter, we try to estimate the target distribution by the proposal
+  distribution, the shape of which is defined by the positions and importance
+  weights of a particle cloud.
+\item Particle deprivation occurs as a result of the resampling step of the
+  filter. While it is more likely when there are not enough particles to cover
+  all of the relevant regions of the target distribution, it happens in particle
+  filters with any number of particles due to the nature of random sampling. The
+  danger of deprivation is that it can result in there being no particles near
+  the true state of the system.
+\item If instead of resampling we simply updated weights for the particles, we
+  would end up with particles in areas of the space which simply did not need
+  representation because the probability of the true state being in that area is
+  very low. These particles would be wasted representing this space. If we
+  instead resample and represent the areas in which the system has a high
+  probability of being, then we cover more positions that might be the true
+  state. In essence, we would like to have the number of particles in a region
+  proportional to the probability of the state of being in that region.
+\item The average of the particle set is usually not a good representation of
+  the set, particularly in cases where the proposal distribution is multimodal,
+  that is, when it has multiple peaks, or there are multiple groups of
+  particles. In the case of a two-peaked distribution, the average will end up
+  in the centre of the two groups, and is not representative of any state in
+  which the system is likely to be.
+\item To make inferences about the probability of states between particles we
+  can use histograms or Gaussian kernels. In the case of histograms, we can find
+  the probability of the system being in an intermediate bin by interpolating
+  the values of two adjacent bins. With Gaussian kernels, we can place a
+  Gaussian on each particle, with a height proportional to the weight of the
+  particle and with the same variance for each particle, depending on some
+  uncertainty measure. Having summed all of these Gaussians, we could get
+  information about intermediate states by looking at the resulting
+  distribution.
+\item Sample variance is the variability introduced due to random sampling from
+  a distribution. As we sample only a certain number of times, the statistics of
+  the new distribution will vary slightly from that of the original. This can
+  cause problems as if the sample variance is too large the representation of
+  the true belief will not be good. There are a number of techniques available
+  to perform variance reduction. One technique is to increase the time between
+  subsequent resamplings. Another is to use low variance sampling, which uses a
+  stochastic process to select samples instead of sampling them independently.
+\item If the pose uncertainty is large, the target distribution has a large
+  spread, and therefore may have many peaks in different places which must all
+  be represented to have an accurate proposal distribution. Do do so, we need a
+  large number of particles. Thus, for a higher pose uncertainty, a larger
+  number of particles are required.
+\end{enumerate}
+\end{document}
