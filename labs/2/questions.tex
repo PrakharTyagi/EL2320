@@ -109,18 +109,20 @@
 \item With multinomial sampling, the probability of not sampling a given
   particle~$p_i$ with weight~$w_i$ is $1-w_i$. The remainder of the probability
   is the probability that any of the other $M-1$ particles are selected. For a
-  specific particle \emph{not} to be selected after a whole round of $M$ independent
-  sampling attempts is $(1-w_i)^M$. Thus, the probability that a particles
-  \emph{does} survive the resampling step is $1-(1-w_i)^M$, regardless of its
-  weight. In the case of systematic sampling, the random number~$r\sim
+  specific particle \emph{not} to be selected after a whole round of $M$
+  independent sampling attempts is $(1-w_i)^M$. Thus, the probability that a
+  particles \emph{does} survive the resampling step is $1-(1-w_i)^M$, regardless
+  of its weight. In the case of systematic sampling, the random number~$r\sim
   U[0,\frac{1}{M}]$ and the step size $\frac{1}{M}$ play an important role in
-  deciding whether a particle survives. There are three interesting cases to
-  consider: $w_i=\frac{1}{M}+\epsilon$, where $\epsilon$ is a small positive
-  number, $w_i=\frac{1}{M}$, and $0<w_i<\frac{1}{M}$. In the first case, the
-  particle is guaranteed to survive---because the step size is smaller than the
-  width of the bin, we will always choose it. The other two cases depend on the
-  random number $r$ chosen as the starting point and the ordering of the
-  weights.
+  deciding whether a particle survives. There two interesting cases to consider:
+  $w_i=\frac{1}{M}+\epsilon$, where $\epsilon$ is a small positive number, and
+  $0\le w_i\le\frac{1}{M}$. In the first case, the particle is guaranteed to
+  survive---the step size is smaller than the width of the bin, and so the
+  process will always end up in that bin. In the second case, the probability of
+  survival is $w_i\cdot M$. This has to do with the fact that weights which have
+  a small proportion of the total weight are chosen depending on the number of
+  particles; the more particles there are, the less likely particles with lower
+  weight will be chosen.
 \item The measurement noise is modelled by \texttt{Sigma\_Q}, and the process
   noise by \texttt{Sigma\_R}.
   \begin{table}
@@ -161,7 +163,7 @@
 \item When the measurement noise is low, the estimate is very inaccurate as it
   is assumed that if predicted measurements do not correspond very closely to
   the true measurement they are seen as outliers, and as a result particles do
-  not converge to the true state. For measurement noise close to 1, the
+  not converge to the trnue state. For measurement noise close to 1, the
   particles stay dispersed until a valid measurement is received, at which point
   they instantly converge to a tight cloud. After this point, increasing the
   noise simply increases the spread of the particle cloud, as more particles
@@ -277,4 +279,96 @@
   of the particle accordingly.
 \end{enumerate}
 \subsection{Results}
+\subsubsection{Map 1}
+Map 1 is a symmetric environment, and so the particle filter should keep a
+number of hypotheses to cover all the possible positions of the true state. We
+must increase the \texttt{part\_bound} variable in order to increase the spread
+of the particles so that they cover all possible starting positions around the
+four landmarks. There are generally four valid hypotheses for these four
+landmarks, one corresponding to each. However, in certain points on the map,
+such as between landmarks, the hypotheses become slightly more spread out.
+
+\begin{figure}
+  \subfloat{
+    \centerline
+    {
+      \includegraphics[width=.43\textwidth]{figures/map2/p10k_def_start_multi}
+      \includegraphics[width=.43\textwidth]{figures/map2/p10k_def_start_multi2}
+      \includegraphics[width=.43\textwidth]{figures/map2/p10k_def_start_multi3}
+    }
+  }
+  \caption{Evolution of hypotheses at the start of estimation on the first map
+    with 10000 particles. We see the gradual convergence towards four main
+    hypotheses.}
+  \label{fig:hypev}
+\end{figure}
+With only 1000 particles, not all of the hypotheses are kept reliably, whereas
+with 10000 particles, all hypotheses are correctly preserved in most runs. With
+a small number of particles, the effect of particle deprivation is much more
+obvious, but it is mitigated by increasing the number of particles, which is why
+the hypotheses are preserved in the 10000 particle case. Figure~\ref{fig:hypev}
+shows the evolution of the system from the beginning until the four hypotheses
+are reached. Multinomial sampling does not preserve multiple hypotheses well as
+it has a high variance, which means that some particles are selected more than
+others due to their weights. Systematic sampling, on the other hand, is a low
+variance method, and results in more distinct particles from the previous
+timestep surviving each resampling step. With larger measurement noise, the
+particle cloud is larger, but hypotheses are still preserved to some
+extent. With small measurement noise, hypotheses are lost almost immediately.
+\subsubsection{Map 2}
+The filter converges to the correct hypothesis in most cases, but as always
+convergence is better if there are more particles. Some time after convergence,
+however, due to process noise, other hypotheses begin to reappear, as seen in
+Figure~\ref{fig:hypconv}, but this is to be expected. Figure~\ref{fig:hypm2}
+shows the evolution of the particle cloud at the beginning of the process. In
+Figure~\ref{fig:hyperr} we see the evolution of the error and covariance of the
+particle cloud, which take on their best values close to the point of
+convergence, and show where the filter begins to consider alternative
+hypotheses. With a small number of particles, the filter will converge to just a
+few of the possible states, and occasionally randomly converge to the correct
+hypothesis, even before the point at which it can be determined which of the
+four possible hypotheses is the correct one.
+\begin{figure}
+  \subfloat{
+    \centerline
+    {
+      \includegraphics[width=.43\textwidth]{figures/map3/p10k_def_start_multi}
+      \includegraphics[width=.43\textwidth]{figures/map3/p10k_def_start_multi2}
+      \includegraphics[width=.43\textwidth]{figures/map3/p10k_def_start_multi3}
+    }
+  }
+  \caption{Evolution of hypotheses on the second asymmetric map with 10000
+    particles. The estimate gradually converges to the four valid hypotheses.}
+  \label{fig:hypm2}
+\end{figure}
+\begin{figure}
+  \centering
+    \subfloat{
+    \centerline
+    {
+      \includegraphics[width=.43\textwidth]{figures/map3/p10k_def_start_beforeconv}
+      \includegraphics[width=.43\textwidth]{figures/map3/p10k_def_start_afterconv}
+      \includegraphics[width=.43\textwidth]{figures/map3/p10k_def_start_afterconv_add}
+    }
+  }
+  \caption{The estimate with 10000 particles converging to the true state after
+    observing the asymmetric landmark. After some time the estimate begins to
+    diverge again due to noise.}
+  \label{fig:hypconv}
+\end{figure}
+\begin{figure}
+  \centering
+  \subfloat{
+    \includegraphics[width=.43\textwidth]{figures/map3/complete_sigma}
+  }
+  \subfloat{
+    \includegraphics[width=.43\textwidth]{figures/map3/complete_error}
+  }
+  \caption{Error and covariance over time for the first 400 time steps in the
+    asymmetric map with 10000 particles. We see that the covariance decreases
+    gradually in $x$ and $y$, and is best at the point of convergence. Error is
+    also lowest at the convergence point, but increases as the system continues
+    to evolve. }
+  \label{fig:hyperr}
+\end{figure}
 \end{document}
